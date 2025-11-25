@@ -53,7 +53,6 @@ export const FlipCard: React.FC<FlipCardProps> = ({ card }) => {
           <div className="absolute inset-0">
              <img 
                src={card.imageSrc} 
-               alt={card.title} 
                className="w-full h-full object-cover"
                loading="lazy"
                referrerPolicy="no-referrer"
