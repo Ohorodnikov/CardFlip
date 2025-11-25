@@ -1,0 +1,5 @@
+{
+  "name": "Copy of Memory Flip Grid",
+  "description": "A responsive, interactive card grid application where users can upload CSV data to generate randomized flip cards with images and descriptions.",
+  "requestFramePermissions": []
+}
