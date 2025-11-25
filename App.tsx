@@ -71,10 +71,10 @@ export default function App() {
   const downloadExampleCSV = () => {
     const csvContent = "data:text/csv;charset=utf-8," 
       + "title,description,image_url\n"
-      + "Mountain Sunset,A beautiful sunset over the rocky mountains.,https://picsum.photos/id/10/800/800\n"
-      + "Ocean Breeze,Calm waves hitting the sandy shore.,https://picsum.photos/id/11/800/800\n"
-      + "Urban City,A busy city street at night with neon lights.,https://picsum.photos/id/12/800/800\n"
-      + "Forest Path,A quiet path through a dense green forest.,https://picsum.photos/id/13/800/800";
+      + "Mountain Sunset,A beautiful sunset over the rocky mountains.,https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=80\n"
+      + "Ocean Breeze,Calm waves hitting the sandy shore.,https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80\n"
+      + "Urban City,A busy city street at night with neon lights.,https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=800&q=80\n"
+      + "Forest Path,A quiet path through a dense green forest.,https://images.unsplash.com/photo-1448375240586-dfd8d395ea6c?w=800&q=80";
     
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");

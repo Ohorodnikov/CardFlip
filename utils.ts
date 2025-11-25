@@ -70,6 +70,6 @@ export function getImageSrc(row: CSVRow): string {
   if (row.image_url) {
     return row.image_url;
   }
-  // Fallback placeholder
-  return 'https://picsum.photos/400/600';
+  // Fallback placeholder - using a highly reliable placeholder service
+  return 'https://placehold.co/600x400/4f46e5/ffffff?text=No+Image';
 }

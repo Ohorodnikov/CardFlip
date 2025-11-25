@@ -56,6 +56,8 @@ export const FlipCard: React.FC<FlipCardProps> = ({ card }) => {
                alt={card.title} 
                className="w-full h-full object-cover"
                loading="lazy"
+               referrerPolicy="no-referrer"
+               crossOrigin="anonymous"
              />
              {/* Overlay for text readability */}
              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
