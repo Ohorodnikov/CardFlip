@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { FileUpload } from './components/FileUpload';
 import { FlipCard } from './components/FlipCard';
+import { CsvCreatorModal } from './components/CsvCreatorModal';
 import { CardData, GameSession } from './types';
 import { shuffleArray, cn } from './utils';
-import { LayoutGrid, RefreshCw, Plus, Download, X, Gamepad2 } from 'lucide-react';
+import { LayoutGrid, RefreshCw, Plus, Download, X, Gamepad2, FilePlus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function App() {
   const [sessions, setSessions] = useState<GameSession[]>([]);
   // activeSessionId is null when showing the "New Game" (Upload) screen
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [showCsvCreator, setShowCsvCreator] = useState(false);
 
   const activeSession = sessions.find(s => s.id === activeSessionId);
 
@@ -87,6 +89,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-indigo-100 selection:text-indigo-900 flex flex-col">
+      <CsvCreatorModal isOpen={showCsvCreator} onClose={() => setShowCsvCreator(false)} />
+
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -138,6 +142,15 @@ export default function App() {
               >
                 <Plus className="w-4 h-4" />
                 <span className={sessions.length === 0 ? "inline" : "hidden sm:inline"}>New Game</span>
+              </button>
+
+              <button
+                onClick={() => setShowCsvCreator(true)}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium transition-colors border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900 ml-2"
+                title="Create CSV"
+              >
+                <FilePlus className="w-4 h-4" />
+                <span className="hidden md:inline">Create CSV</span>
               </button>
             </div>
           </div>
