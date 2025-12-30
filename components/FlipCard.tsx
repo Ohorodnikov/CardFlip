@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Maximize2, X } from 'lucide-react';
+import { Maximize2, X, Info, ChevronRight, ChevronLeft } from 'lucide-react';
 import { CardData } from '../types';
 import { cn } from '../utils';
 
@@ -11,6 +11,7 @@ interface FlipCardProps {
 export const FlipCard: React.FC<FlipCardProps> = ({ card }) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [showInfo, setShowInfo] = useState(true);
 
   // Prevent scroll when modal is open
   useEffect(() => {
@@ -33,6 +34,11 @@ export const FlipCard: React.FC<FlipCardProps> = ({ card }) => {
   const handleExpand = (e: React.MouseEvent) => {
     e.stopPropagation(); // Don't trigger the flip
     setIsExpanded(true);
+  };
+
+  const toggleInfo = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowInfo(!showInfo);
   };
 
   return (
@@ -75,6 +81,7 @@ export const FlipCard: React.FC<FlipCardProps> = ({ card }) => {
             <div className="absolute inset-0">
                <img 
                  src={card.imageSrc} 
+                 alt={card.title} 
                  className="w-full h-full object-cover"
                  loading="lazy"
                  referrerPolicy="no-referrer"
@@ -112,60 +119,107 @@ export const FlipCard: React.FC<FlipCardProps> = ({ card }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 sm:p-8"
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/95 backdrop-blur-xl"
             onClick={() => setIsExpanded(false)}
           >
+            {/* Close Button - Top Level */}
+            <button 
+              onClick={() => setIsExpanded(false)}
+              className="fixed top-6 right-6 z-[210] p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all border border-white/10 backdrop-blur-md"
+            >
+              <X className="w-6 h-6" />
+            </button>
+
             <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative w-full max-w-6xl max-h-[90vh] bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative w-[98vw] h-[96vh] flex flex-col md:flex-row overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Image Container */}
-              <div className="flex-1 bg-black flex items-center justify-center overflow-hidden min-h-[300px]">
+              {/* Image Container - Grows to fill available space */}
+              <div className="flex-1 relative flex items-center justify-center overflow-hidden bg-black/40 rounded-3xl m-2 sm:m-4">
                 <img 
                   src={card.imageSrc} 
                   alt={card.title} 
-                  className="max-w-full max-h-full object-contain"
+                  className="w-full h-full object-contain pointer-events-none"
                   referrerPolicy="no-referrer"
                   crossOrigin="anonymous"
                 />
+
+                {/* Mobile Toggle Button (Floating) */}
+                <button 
+                  onClick={toggleInfo}
+                  className="md:hidden absolute bottom-6 right-6 p-4 bg-indigo-600 text-white rounded-full shadow-lg z-30"
+                >
+                  <Info className="w-6 h-6" />
+                </button>
               </div>
 
-              {/* Info Sidebar */}
-              <div className="w-full md:w-80 lg:w-96 p-8 flex flex-col border-t md:border-t-0 md:border-l border-white/10 overflow-y-auto bg-zinc-900/50 backdrop-blur-xl">
-                <div className="flex justify-between items-start mb-6">
-                   <div className="bg-indigo-600/20 text-indigo-400 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-                     Card #{card.displayNumber}
-                   </div>
-                   <button 
-                     onClick={() => setIsExpanded(false)}
-                     className="p-2 text-zinc-400 hover:text-white hover:bg-white/10 rounded-full transition-colors"
-                   >
-                     <X className="w-5 h-5" />
-                   </button>
-                </div>
-
-                <h2 className="text-3xl font-bold text-white mb-4 leading-tight">
-                  {card.title}
-                </h2>
-                
-                <div className="h-px w-12 bg-indigo-500 mb-6" />
-                
-                <p className="text-zinc-400 leading-relaxed text-lg whitespace-pre-wrap">
-                  {card.description}
-                </p>
-
-                <div className="mt-auto pt-8">
-                  <button
-                    onClick={() => setIsExpanded(false)}
-                    className="w-full py-4 bg-white text-zinc-900 font-bold rounded-2xl hover:bg-zinc-200 transition-colors active:scale-[0.98]"
+              {/* Info Panel - Sliding Sidebar/Overlay */}
+              <AnimatePresence>
+                {showInfo && (
+                  <motion.div
+                    initial={{ x: '100%' }}
+                    animate={{ x: 0 }}
+                    exit={{ x: '100%' }}
+                    transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                    className={cn(
+                      "fixed md:relative inset-y-0 right-0 w-full md:w-[400px] z-[205]",
+                      "bg-zinc-900/90 md:bg-zinc-900/40 backdrop-blur-3xl border-l border-white/10 shadow-2xl flex flex-col"
+                    )}
                   >
-                    Close Preview
-                  </button>
-                </div>
-              </div>
+                    {/* Panel Header */}
+                    <div className="p-8 pb-4 flex items-center justify-between">
+                       <div className="bg-indigo-600/20 text-indigo-400 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                         Card #{card.displayNumber}
+                       </div>
+                       <button 
+                         onClick={toggleInfo}
+                         className="p-2 text-zinc-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors"
+                         title="Hide Sidebar"
+                       >
+                         <ChevronRight className="w-6 h-6" />
+                       </button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto px-8 py-4 space-y-6">
+                      <div>
+                        <h2 className="text-4xl font-bold text-white mb-4 leading-tight">
+                          {card.title}
+                        </h2>
+                        <div className="h-1.5 w-16 bg-indigo-500 rounded-full" />
+                      </div>
+                      
+                      <div className="text-zinc-300 leading-relaxed text-xl font-light whitespace-pre-wrap">
+                        {card.description}
+                      </div>
+                    </div>
+
+                    <div className="p-8 border-t border-white/10">
+                      <button
+                        onClick={() => setIsExpanded(false)}
+                        className="w-full py-4 bg-white text-zinc-900 font-bold rounded-2xl hover:bg-zinc-200 transition-colors active:scale-[0.98] shadow-xl"
+                      >
+                        Back to Deck
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Re-open Info Sidebar Button (if hidden) */}
+              {!showInfo && (
+                <motion.button
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  onClick={toggleInfo}
+                  className="fixed right-6 top-1/2 -translate-y-1/2 z-[205] p-3 bg-white/10 hover:bg-indigo-600 text-white rounded-full border border-white/10 backdrop-blur-md transition-all shadow-lg"
+                  title="Show Info"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </motion.button>
+              )}
             </motion.div>
           </motion.div>
         )}
