@@ -16,45 +16,87 @@ export function shuffleArray<T>(array: T[]): T[] {
   return newArray;
 }
 
-// Simple CSV Parser
+/**
+ * Robust CSV Parser following RFC 4180
+ * Handles multiline fields, quoted values, and escaped quotes ("")
+ */
 export function parseCSV(text: string): CSVRow[] {
-  const lines = text.trim().split(/\r?\n/);
-  if (lines.length < 2) return [];
+  const rows: string[][] = [];
+  let currentField = '';
+  let inQuotes = false;
+  let currentRow: string[] = [];
 
-  const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-  const results: CSVRow[] = [];
+  // Normalize line endings and handle potential BOM
+  const cleanText = text.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
-  for (let i = 1; i < lines.length; i++) {
-    const currentLine = lines[i].trim();
-    if (!currentLine) continue;
+  for (let i = 0; i < cleanText.length; i++) {
+    const char = cleanText[i];
+    const nextChar = cleanText[i + 1];
 
-    // Handle quoted values correctly
-    const values: string[] = [];
-    let inQuotes = false;
-    let currentValue = '';
-
-    for (let char of currentLine) {
-      if (char === '"') {
-        inQuotes = !inQuotes;
-      } else if (char === ',' && !inQuotes) {
-        values.push(currentValue.trim().replace(/^"|"$/g, ''));
-        currentValue = '';
+    if (inQuotes) {
+      if (char === '"' && nextChar === '"') {
+        // Escaped quote
+        currentField += '"';
+        i++; // Skip the next quote
+      } else if (char === '"') {
+        // End of quoted field
+        inQuotes = false;
       } else {
-        currentValue += char;
+        // Character inside quotes (including newlines and commas)
+        currentField += char;
+      }
+    } else {
+      if (char === '"') {
+        // Start of quoted field
+        inQuotes = true;
+      } else if (char === ',') {
+        // Field separator
+        currentRow.push(currentField);
+        currentField = '';
+      } else if (char === '\n') {
+        // Line separator
+        currentRow.push(currentField);
+        rows.push(currentRow);
+        currentRow = [];
+        currentField = '';
+      } else {
+        // Regular character
+        currentField += char;
       }
     }
-    values.push(currentValue.trim().replace(/^"|"$/g, ''));
+  }
+
+  // Handle the last field and row if the file doesn't end with a newline
+  if (currentField !== '' || currentRow.length > 0) {
+    currentRow.push(currentField);
+    rows.push(currentRow);
+  }
+
+  if (rows.length < 1) return [];
+
+  // Clean headers
+  const headers = rows[0].map(h => h.trim().toLowerCase());
+  const results: CSVRow[] = [];
+
+  // Process data rows
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    
+    // Skip empty lines
+    if (row.length === 1 && row[0].trim() === '') continue;
 
     const entry: any = {};
     headers.forEach((header, index) => {
-      if (values[index] !== undefined) {
-        entry[header] = values[index];
+      if (header) {
+        // Trim final values to remove potential external whitespace
+        const val = row[index] !== undefined ? row[index].trim() : '';
+        entry[header] = val;
       }
     });
 
-    // Validate required fields roughly
+    // Validate that at least the title exists
     if (entry.title) {
-        results.push(entry);
+      results.push(entry);
     }
   }
 
