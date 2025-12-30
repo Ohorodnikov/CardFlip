@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Upload, Plus, Trash2, Download, Loader2, FileText, AlertCircle, CheckCircle2, Edit2 } from 'lucide-react';
 import { cn } from '../utils';
@@ -45,10 +46,11 @@ export const CsvCreatorModal: React.FC<CsvCreatorModalProps> = ({ isOpen, onClos
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const newItems: UploadItem[] = Array.from(e.target.files).map(file => ({
+      // Explicitly type the mapped objects to fix the TS error where 'file' might be inferred as 'unknown' or '{}'
+      const newItems: UploadItem[] = Array.from(e.target.files).map((file: File) => ({
         id: Math.random().toString(36).substring(7),
         file,
-        status: 'pending'
+        status: 'pending' as const
       }));
       setUploadQueue(prev => [...prev, ...newItems]);
       
