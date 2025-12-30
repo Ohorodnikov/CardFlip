@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { CSVRow } from './types';
+import type { CSVRow } from './types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -82,21 +82,22 @@ export function parseCSV(text: string): CSVRow[] {
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
     
-    // Skip empty lines
-    if (row.length === 1 && row[0].trim() === '') continue;
+    // Skip completely empty lines
+    if (row.length === 0 || (row.length === 1 && row[0].trim() === '')) continue;
 
     const entry: any = {};
     headers.forEach((header, index) => {
       if (header) {
-        // Trim final values to remove potential external whitespace
-        const val = row[index] !== undefined ? row[index].trim() : '';
+        // Ensure index exists in row, else default to empty string
+        const rawVal = row[index];
+        const val = rawVal !== undefined ? rawVal.trim() : '';
         entry[header] = val;
       }
     });
 
     // Validate that at least the title exists
     if (entry.title) {
-      results.push(entry);
+      results.push(entry as CSVRow);
     }
   }
 
@@ -105,13 +106,13 @@ export function parseCSV(text: string): CSVRow[] {
 
 export function getImageSrc(row: CSVRow): string {
   if (row.image_base64) {
-    // Check if it already has the prefix, if not, assume standard png/jpg/jpeg
+// Check if it already has the prefix, if not, assume standard png/jpg/jpeg
     if (row.image_base64.startsWith('data:')) return row.image_base64;
     return `data:image/jpeg;base64,${row.image_base64}`;
   }
   if (row.image_url) {
     return row.image_url;
   }
-  // Fallback placeholder - using a highly reliable placeholder service
+// Fallback placeholder - using a highly reliable placeholder service
   return 'https://placehold.co/600x400/4f46e5/ffffff?text=No+Image';
 }
