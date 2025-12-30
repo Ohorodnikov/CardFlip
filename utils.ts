@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import type { CSVRow } from './types';
+import { CSVRow } from './types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -16,77 +16,45 @@ export function shuffleArray<T>(array: T[]): T[] {
   return newArray;
 }
 
-/**
- * Robust CSV Parser following RFC 4180.
- * Handles multiline fields and escaped quotes.
- */
+// Simple CSV Parser
 export function parseCSV(text: string): CSVRow[] {
-  if (!text) return [];
+  const lines = text.trim().split(/\r?\n/);
+  if (lines.length < 2) return [];
 
-  const rows: string[][] = [];
-  let currentRow: string[] = [];
-  let currentField = '';
-  let inQuotes = false;
-
-  // Normalize line endings to avoid issues with different OS formats
-  const content = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-
-  for (let i = 0; i < content.length; i++) {
-    const char = content[i];
-    const next = content[i + 1];
-
-    if (inQuotes) {
-      if (char === '"' && next === '"') {
-        // Escaped quote: "" -> "
-        currentField += '"';
-        i++; // Skip the next quote
-      } else if (char === '"') {
-        inQuotes = false;
-      } else {
-        currentField += char;
-      }
-    } else {
-      if (char === '"') {
-        inQuotes = true;
-      } else if (char === ',') {
-        currentRow.push(currentField);
-        currentField = '';
-      } else if (char === '\n') {
-        currentRow.push(currentField);
-        rows.push(currentRow);
-        currentRow = [];
-        currentField = '';
-      } else {
-        currentField += char;
-      }
-    }
-  }
-
-  // Handle content that doesn't end with a trailing newline
-  if (currentField !== '' || currentRow.length > 0) {
-    currentRow.push(currentField);
-    rows.push(currentRow);
-  }
-
-  if (rows.length < 2) return [];
-
-  const headers = rows[0].map(h => h.trim().toLowerCase());
+  const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
   const results: CSVRow[] = [];
 
-  for (let i = 1; i < rows.length; i++) {
-    const row = rows[i];
-    // Skip empty lines or lines that are just whitespace
-    if (row.length === 0 || (row.length === 1 && row[0].trim() === '')) continue;
-    
+  for (let i = 1; i < lines.length; i++) {
+    const currentLine = lines[i].trim();
+    if (!currentLine) continue;
+
+    // Handle quoted values correctly
+    const values: string[] = [];
+    let inQuotes = false;
+    let currentValue = '';
+
+    for (let char of currentLine) {
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        values.push(currentValue.trim().replace(/^"|"$/g, ''));
+        currentValue = '';
+      } else {
+        currentValue += char;
+      }
+    }
+    values.push(currentValue.trim().replace(/^"|"$/g, ''));
+
     const entry: any = {};
     headers.forEach((header, index) => {
-      if (header) {
-        entry[header] = (row[index] || '').trim();
+      if (values[index] !== undefined) {
+        entry[header] = values[index];
       }
     });
 
+    // Validate required fields roughly
     if (entry.title) {
-      results.push(entry as CSVRow);
+        results.push(entry);
     }
   }
 
@@ -102,5 +70,6 @@ export function getImageSrc(row: CSVRow): string {
   if (row.image_url) {
     return row.image_url;
   }
+  // Fallback placeholder - using a highly reliable placeholder service
   return 'https://placehold.co/600x400/4f46e5/ffffff?text=No+Image';
 }
