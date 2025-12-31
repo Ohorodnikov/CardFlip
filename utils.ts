@@ -18,48 +18,83 @@ export function shuffleArray<T>(array: T[]): T[] {
 
 // Simple CSV Parser
 export function parseCSV(text: string): CSVRow[] {
-  const lines = text.trim().split(/\r?\n/);
-  if (lines.length < 2) return [];
+  if (!text) return [];
 
-  const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-  const results: CSVRow[] = [];
+  const rows: string[][] = [];
+  let currentRow: string[] = [];
+  let currentField = '';
+  let inQuotes = false;
 
-  for (let i = 1; i < lines.length; i++) {
-    const currentLine = lines[i].trim();
-    if (!currentLine) continue;
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const nextChar = text[i + 1];
 
-    // Handle quoted values correctly
-    const values: string[] = [];
-    let inQuotes = false;
-    let currentValue = '';
-
-    for (let char of currentLine) {
-      if (char === '"') {
-        inQuotes = !inQuotes;
-      } else if (char === ',' && !inQuotes) {
-        values.push(currentValue.trim().replace(/^"|"$/g, ''));
-        currentValue = '';
+    if (inQuotes) {
+      if (char === '"' && nextChar === '"') {
+        // Escaped quote ("")
+        currentField += '"';
+        i++; // skip next quote
+      } else if (char === '"') {
+        inQuotes = false;
       } else {
-        currentValue += char;
+        currentField += char;
+      }
+    } else {
+      if (char === '"') {
+        inQuotes = true;
+      } else if (char === ',') {
+        currentRow.push(currentField.trim());
+        currentField = '';
+      } else if (char === '\r' && nextChar === '\n') {
+        currentRow.push(currentField.trim());
+        rows.push(currentRow);
+        currentRow = [];
+        currentField = '';
+        i++; // skip \n
+      } else if (char === '\n' || char === '\r') {
+        currentRow.push(currentField.trim());
+        rows.push(currentRow);
+        currentRow = [];
+        currentField = '';
+      } else {
+        currentField += char;
       }
     }
-    values.push(currentValue.trim().replace(/^"|"$/g, ''));
+  }
 
-    const entry: any = {};
+  // Final field
+  if (currentField !== '' || currentRow.length) {
+    currentRow.push(currentField.trim());
+    rows.push(currentRow);
+  }
+
+  if (rows.length < 2) return [];
+
+  const headers = rows[0].map(h => h.trim().toLowerCase());
+  const results: CSVRow[] = [];
+
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+
+    // Skip empty rows
+    if (row.every(cell => !cell)) continue;
+
+    const entry: Partial<CSVRow> = {};
+
     headers.forEach((header, index) => {
-      if (values[index] !== undefined) {
-        entry[header] = values[index];
-      }
+      if (!header) return;
+      entry[header] = row[index] ?? '';
     });
 
-    // Validate required fields roughly
+    // Required field check
     if (entry.title) {
-        results.push(entry);
+      results.push(entry as CSVRow);
     }
   }
 
   return results;
 }
+
 
 export function getImageSrc(row: CSVRow): string {
   if (row.image_base64) {
